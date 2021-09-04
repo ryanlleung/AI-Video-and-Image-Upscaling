@@ -28,10 +28,10 @@ def upscale_img(img,model,x=2):
     return sr.upsample(img)
 
 
-path = "xxx"
+path = "approach"
 image = cv2.imread("cmp_imgs/"+path+".png")
 t0 = time.time()
-upscaled = upscale_img(image,"lapsrn",2)
+upscaled = upscale_img(image,"edsr",4)
 t1 = time.time()
 print("\nElasped time:",np.round(t1-t0,4),"s")
 cv2.imwrite("cmp_imgs/"+path+"_up.png",upscaled)
