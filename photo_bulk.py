@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 import time
 
@@ -15,7 +13,9 @@ names = []
 direc = os.fsencode("photo_src")
 for file in os.listdir(direc):
     names.append(os.fsdecode(file))
+
 t0 = time.time()
+
 errlist = []
 for i in range(0,len(names)):
     path = names[i]
@@ -35,6 +35,7 @@ for i in range(0,len(names)):
         plt.show()
     t1 = time.time()
     print("\nElasped time:",np.round(t1-t0,4),"s  | ",i+1-len(errlist),"out of",len(names)-len(errlist))
+
 if len(errlist) != 0:
     print("\nThe photos below are too large:")
     for i in errlist:
