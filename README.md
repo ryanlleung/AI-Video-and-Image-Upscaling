@@ -4,7 +4,7 @@ This project uses the dnn_superres module in OpenCV to perform AI video and imag
 
 # Installation
 
-Create a virtual environment on Anaconda Python distribution, using Python version 3.9.13.
+Create a new virtual environment on Anaconda Python distribution, using Python version 3.9.13.
 
 Open Anaconda Prompt and install opencv-contrib-python using pip:
 ```
