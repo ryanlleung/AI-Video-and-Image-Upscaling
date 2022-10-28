@@ -26,7 +26,7 @@ def upscale_img(img,model='lapsrn',scale=2):
 
     # Manage invalid parameters
     if scale == 1:
-        print('Returned the same image')
+        print('Returned the same image...')
         return img
     if scale > 8 or scale <= 0:
         print("Error: Scale has to be between 0 and 8.")

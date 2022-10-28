@@ -25,7 +25,7 @@ for i in range(0,len(names)):
         errlist.append((i,names[i]))
         continue
     upscaled = upscale_img(img,"edsr",scale)
-    cv2.imwrite("image_dst/"+path[:-4]+"_up.png",upscaled)
+    cv2.imwrite("image_dst/"+path[:-4]+"_resized.png",upscaled)
     if show == True:
         plt.figure(figsize=(12,8))
         plt.subplot(1,2,1)
@@ -34,7 +34,7 @@ for i in range(0,len(names)):
         plt.imshow(upscaled[:,:,::-1])
         plt.show()
     t1 = time.time()
-    print("\nElasped time:",np.round(t1-t0,4),"s  | ",i+1-len(errlist),"out of",len(names)-len(errlist))
+    print("\nElasped time:",np.round(t1-t0,2),"s  | ",i+1-len(errlist),"out of",len(names)-len(errlist))
 
 if len(errlist) != 0:
     print("\nThe photos below are too large:")
