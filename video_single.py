@@ -7,8 +7,8 @@ from img_ops import *
 
 
 ## VIDEO ##
-path = "car"
-scale = 2
+path = "stopwatch"
+scale = .2
 fps = 30 #### CHECK THIS ####
 
 cap = cv2.VideoCapture('video_src/'+path+'.mp4')
@@ -18,7 +18,7 @@ if cap.isOpened() == False:
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-writer = cv2.VideoWriter('video_dst/'+path+'_up.mp4',cv2.VideoWriter_fourcc(*'XVID'),fps,(width*scale,height*scale))
+writer = cv2.VideoWriter('video_dst/'+path+'_up.mp4',cv2.VideoWriter_fourcc(*'XVID'),fps,(int(width*scale),int(height*scale)))
 
 t0 = time.time()
 while cap.isOpened():
