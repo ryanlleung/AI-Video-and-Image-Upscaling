@@ -16,7 +16,8 @@ class MainWindow(QWidget):
 	
     def initUI(self):
         
-        # Create before layout
+        ### Before ###
+
         self.before_layout = QVBoxLayout()
         self.before_layout.setContentsMargins(0, 0, 0, 0)
         self.before_title = QLabel('Original')
@@ -33,7 +34,8 @@ class MainWindow(QWidget):
         pixmap = pixmap.scaled(self.before_img.size(), aspectRatioMode=Qt.KeepAspectRatio, transformMode=Qt.SmoothTransformation)
         self.before_img.setPixmap(pixmap)
 
-        # Create after layout 
+        ### After ###
+
         self.after_layout = QVBoxLayout()
         self.after_layout.setContentsMargins(0, 0, 0, 0)
         self.after_title = QLabel('Result')
@@ -50,48 +52,78 @@ class MainWindow(QWidget):
         pixmap = pixmap.scaled(self.after_img.size(), aspectRatioMode=Qt.KeepAspectRatio, transformMode=Qt.SmoothTransformation)
         self.after_img.setPixmap(pixmap)
 
-        # Create arrow
+        ### Arrow ###
+
         self.arrow = QLabel('→')
         self.arrow.setAlignment(Qt.AlignCenter)
         self.arrow.setFont(QFont('Arial', 15))
         self.arrow.setStyleSheet("font-weight: bold")
 
-        # Create media layout
+        ##### Media #####
+
         self.media_layout = QHBoxLayout()
         self.media_layout.setContentsMargins(0, 0, 0, 0)
         self.media_layout.addWidget(self.before_widget)
         self.media_layout.addWidget(self.arrow)
         self.media_layout.addWidget(self.after_widget)
+        self.media = QWidget()
+        self.media.setLayout(self.media_layout)
 
+        ############################################################
 
-        # Create queue
+        ### Queue ###
         self.queue = QListWidget()
 
         # add an item to the list
         self.queue.addItem('Item 1')
-
-        # add multiple items to the list
         self.queue.addItems(['Item 2', 'Item 3', 'Item 4'])
-        
 
+        ### Console ###
+
+        # Create 
+
+        # Create console widget
+        self.console_layout = QVBoxLayout()
+        self.console_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.console = QWidget()
+        self.console.setLayout(self.console_layout)
+
+
+        ### Options ###
+
+        # Create options widget
+        self.options_layout = QVBoxLayout()
+        self.options_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.options = QWidget()
+        self.options.setLayout(self.options_layout)
+
+        ##### Settings #####
 
         # Create settings layout
         self.settings_layout = QHBoxLayout()
-        self.settings_layout.addWidget(self.queue)
+        self.settings_layout.setContentsMargins(0, 0, 0, 0)
+        self.settings_layout.addWidget(self.queue, 3)
+        self.settings_layout.addWidget(self.console, 4)
+        self.settings_layout.addWidget(self.options, 4)
+        self.settings = QWidget()
+        self.settings.setLayout(self.settings_layout)
 
+        ############################################################
 
-        # Create main widget
+        ####### Main ########
         self.main_layout = QVBoxLayout()
         self.main_layout.setContentsMargins(10, 10, 10, 10)
-        self.main_layout.addLayout(self.media_layout)
-        self.main_layout.addLayout(self.settings_layout)
+        self.main_layout.addWidget(self.media, 7)
+        self.main_layout.addWidget(self.settings, 3)
         self.setLayout(self.main_layout)
 
-        ## Window ##
+        ###---------Window---------###
 
         QApplication.setStyle(QStyleFactory.create('Fusion'))
         self.setGeometry(1600, 100, 750, 500)
-        self.setWindowTitle('QSplitter demo')
+        self.setWindowTitle('AI Upscaler')
         self.show()
 
             
