@@ -72,11 +72,21 @@ class MainWindow(QWidget):
         ############################################################
 
         ### Queue ###
-        self.queue = QListWidget()
 
-        # add an item to the list
-        self.queue.addItem('Item 1')
-        self.queue.addItems(['Item 2', 'Item 3', 'Item 4'])
+        self.queue_title = QLabel('Queue')
+        self.queue_title.setFont(QFont('Helvetica', 10))
+
+        self.queue_list = QListWidget()
+        self.queue_list.addItem('Item 1')
+        self.queue_list.addItems(['Item 2', 'Item 3', 'Item 4'])
+
+        self.queue_layout = QVBoxLayout()
+        self.queue_layout.setContentsMargins(0, 0, 0, 0)
+        self.queue_layout.addWidget(self.queue_title)
+        self.queue_layout.addWidget(self.queue_list)
+
+        self.queue = QWidget()
+        self.queue.setLayout(self.queue_layout)
 
         ### Console ###
 
@@ -92,9 +102,71 @@ class MainWindow(QWidget):
 
         ### Options ###
 
+        self.options_title = QLabel('Options')
+        self.options_title.setFont(QFont('Helvetica', 10))
+
+        # Create size widget
+        self.height_label = QLabel('Height:')
+        self.input_height = QLineEdit()
+        self.input_height.setFixedWidth(50)
+        self.input_height.returnPressed.connect(self.onHeightReturnPressed)
+        self.width_label = QLabel('Width:')
+        self.input_width = QLineEdit()
+        self.input_width.setFixedWidth(50)
+        self.input_width.returnPressed.connect(self.onWidthReturnPressed)
+
+        self.size_layout = QHBoxLayout()
+        self.size_layout.setContentsMargins(0, 0, 0, 0)
+        self.size_layout.addWidget(self.height_label)
+        self.size_layout.addWidget(self.input_height)
+        self.size_layout.addWidget(self.width_label)
+        self.size_layout.addWidget(self.input_width)
+
+        self.size = QWidget()
+        self.size.setLayout(self.size_layout)
+
+        # Create scale widget
+        self.scale_label = QLabel('Scale:')
+        self.scale_radio_1 = QRadioButton('x2')
+        self.scale_radio_2 = QRadioButton('x3')
+        self.scale_radio_3 = QRadioButton('x4')
+        self.scale_radio_4 = QRadioButton('x8')
+
+        self.scale_layout = QHBoxLayout()
+        self.scale_layout.setContentsMargins(0, 0, 0, 0)
+        self.scale_layout.addWidget(self.scale_label)
+        self.scale_layout.addWidget(self.scale_radio_1)
+        self.scale_layout.addWidget(self.scale_radio_2)
+        self.scale_layout.addWidget(self.scale_radio_3)
+        self.scale_layout.addWidget(self.scale_radio_4)
+        self.scale = QWidget()
+        self.scale.setLayout(self.scale_layout)
+
+        # Create model widget
+        self.model_label = QLabel('Model:')
+        self.model_combo = QComboBox()
+        self.model_combo.addItems(['EDSR', 'ESPCN', 'FSRCNN', 'LapSRN'])
+        self.model_combo.setCurrentIndex(3)
+
+        self.model_layout = QHBoxLayout()
+        self.model_layout.setContentsMargins(0, 0, 0, 0)
+        self.model_layout.addWidget(self.model_label)
+        self.model_layout.addWidget(self.model_combo)
+
+        self.model = QWidget()
+        self.model.setLayout(self.model_layout)
+
+        # Create set button
+        self.set_button = QPushButton('Set')
+
         # Create options widget
         self.options_layout = QVBoxLayout()
         self.options_layout.setContentsMargins(0, 0, 0, 0)
+        self.options_layout.addWidget(self.options_title)
+        self.options_layout.addWidget(self.size)
+        self.options_layout.addWidget(self.scale)
+        self.options_layout.addWidget(self.model)
+        self.options_layout.addWidget(self.set_button)
 
         self.options = QWidget()
         self.options.setLayout(self.options_layout)
@@ -105,8 +177,8 @@ class MainWindow(QWidget):
         self.settings_layout = QHBoxLayout()
         self.settings_layout.setContentsMargins(0, 0, 0, 0)
         self.settings_layout.addWidget(self.queue, 3)
-        self.settings_layout.addWidget(self.console, 4)
-        self.settings_layout.addWidget(self.options, 4)
+        self.settings_layout.addWidget(self.console, 5)
+        self.settings_layout.addWidget(self.options, 3)
         self.settings = QWidget()
         self.settings.setLayout(self.settings_layout)
 
@@ -125,6 +197,13 @@ class MainWindow(QWidget):
         self.setGeometry(1600, 100, 750, 500)
         self.setWindowTitle('AI Upscaler')
         self.show()
+
+    def onHeightReturnPressed(self):
+        print(self.input_height.text())
+
+    def onWidthReturnPressed(self):
+        print(self.input_width.text())
+
 
             
 def main():
