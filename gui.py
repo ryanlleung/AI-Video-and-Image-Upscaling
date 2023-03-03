@@ -31,7 +31,9 @@ class MainWindow(QWidget):
         self.before_img.setAlignment(Qt.AlignCenter)
         self.before_img.setStyleSheet("background-color: white;")
         self.before_img.setScaledContents(True)
-        
+        self.before_img.setMinimumSize(300, 300)
+        self.before_img.resize(300, 300)
+
         self.before_layout = QVBoxLayout()
         self.before_layout.setContentsMargins(0, 0, 0, 0)
         self.before_layout.addWidget(self.before_title)
@@ -54,6 +56,8 @@ class MainWindow(QWidget):
         self.after_img.setAlignment(Qt.AlignCenter)
         self.after_img.setStyleSheet("background-color: white;")
         self.after_img.setScaledContents(True)
+        self.after_img.setMinimumSize(300, 300)
+        self.after_img.resize(300, 300)
 
         self.after_layout = QVBoxLayout()
         self.after_layout.setContentsMargins(0, 0, 0, 0)
@@ -288,10 +292,16 @@ class MainWindow(QWidget):
     # Function to handle when an item in the queue is clicked
     def onQueueItemClicked(self, item):
         print("queue clicked")
-        pixmap = QPixmap(item.text())
-        self.before_img.setPixmap(pixmap)
+        self.before_pixmap = QPixmap(item.text())
+        self.before_pixmap = self.before_pixmap.scaled(300, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.before_img.setPixmap(self.before_pixmap)
 
-            
+
+    # Function to handle when window is resized
+    def resizeEvent(self, event):
+        # print dimension of before img
+        print('bimg',self.before_img.width(), self.before_img.height())
+       
 def main():
     app = QApplication(sys.argv)
     ex = MainWindow()
