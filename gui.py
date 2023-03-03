@@ -25,12 +25,13 @@ class MainWindow(QWidget):
 
         self.before_title = QLabel('Original')
         self.before_title.setFont(QFont('Helvetica', 10))
+        self.before_title.setFixedHeight(15)
 
         self.before_img = QLabel()
         self.before_img.setAlignment(Qt.AlignCenter)
-        self.before_img.setFixedSize(400, 400)
-        self.before_img.setStyleSheet("background-color: black;")
-
+        self.before_img.setStyleSheet("background-color: white;")
+        self.before_img.setScaledContents(True)
+        
         self.before_layout = QVBoxLayout()
         self.before_layout.setContentsMargins(0, 0, 0, 0)
         self.before_layout.addWidget(self.before_title)
@@ -47,11 +48,12 @@ class MainWindow(QWidget):
 
         self.after_title = QLabel('Result')
         self.after_title.setFont(QFont('Helvetica', 10))
+        self.after_title.setFixedHeight(15)
 
         self.after_img = QLabel()
         self.after_img.setAlignment(Qt.AlignCenter)
-        self.after_img.setFixedSize(400, 400)
-        self.after_img.setStyleSheet("background-color: black;")
+        self.after_img.setStyleSheet("background-color: white;")
+        self.after_img.setScaledContents(True)
 
         self.after_layout = QVBoxLayout()
         self.after_layout.setContentsMargins(0, 0, 0, 0)
@@ -68,7 +70,7 @@ class MainWindow(QWidget):
         ### Arrow ###
 
         self.arrow = QPushButton('→')
-        self.arrow.setFixedWidth(50)
+        self.arrow.setFixedWidth(30)
         self.arrow.clicked.connect(self.onArrowClicked)
 
         ##### Media #####
@@ -286,7 +288,8 @@ class MainWindow(QWidget):
     # Function to handle when an item in the queue is clicked
     def onQueueItemClicked(self, item):
         print("queue clicked")
-        self.before_img.setPixmap(QPixmap(item.text()))
+        pixmap = QPixmap(item.text())
+        self.before_img.setPixmap(pixmap)
 
             
 def main():
