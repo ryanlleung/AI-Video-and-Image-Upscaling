@@ -16,29 +16,6 @@ def display_img(img, cmap=None):
     ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), cmap)
     plt.show()
 
-# Takes input and output path as input, returns upscaled numpy array
-def upscale_ff(input_path ,output_path, model='lapsrn', scale=2):
-    
-    # Check if input file is an image
-    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp']
-    input_ext = os.path.splitext(input_path)[1].lower()
-    output_ext = os.path.splitext(output_path)[1].lower()
-    if input_ext not in image_extensions:
-        raise Exception("Error: Input file is not an image.")
-    if output_ext not in image_extensions:
-        raise Exception("Error: Output file is not an image.")
-    
-    try: img = cv2.imread(input_path)
-    except: raise Exception("Error: Input file not found.")
-
-    upscaled = upscale_img(img, model, scale)
-
-    try: cv2.imwrite(output_path, upscaled)
-    except: raise Exception("Error: Output file could not be written.")
-    else: print("Upscaled image saved to", output_path)
-
-    return upscaled
-
 # Takes numpy array as input, returns discrete upscaled numpy array
 def upscale_dscrt(img, path, model, scale):
     sr = dnn_superres.DnnSuperResImpl_create()
@@ -111,3 +88,26 @@ def upscale_img(img, model='lapsrn', scale=2):
     print('Upscaled by ', str(scale), ' using ', model, 'x', str(sc))
 
     return cv2.resize(upscaled, (width, height))
+
+# Takes input and output path as input, returns upscaled numpy array
+def upscale_ff(input_path ,output_path, model='lapsrn', scale=2):
+    
+    # Check if input file is an image
+    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp', '.gif', '.tiff', '.webp']
+    input_ext = os.path.splitext(input_path)[1].lower()
+    output_ext = os.path.splitext(output_path)[1].lower()
+    if input_ext not in image_extensions:
+        raise Exception("Error: Input file is not an image.")
+    if output_ext not in image_extensions:
+        raise Exception("Error: Output file is not an image.")
+    
+    try: img = cv2.imread(input_path)
+    except: raise Exception("Error: Input file not found.")
+
+    upscaled = upscale_img(img, model, scale)
+
+    try: cv2.imwrite(output_path, upscaled)
+    except: raise Exception("Error: Output file could not be written.")
+    else: print("Upscaled image saved to", output_path)
+
+    return upscaled
