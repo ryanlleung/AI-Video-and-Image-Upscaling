@@ -44,23 +44,15 @@ def upscale_img(img, model='lapsrn', scale=2):
     
     # Set discrete upscaling scale
     if model == 'lapsrn':
-        if scale > 4:
-            sc = 8
-        elif scale > 2:
-            sc = 4
-        elif scale > 1:
-            sc = 2
-        else:
-            sc = 1
+        if scale > 4: sc = 8
+        elif scale > 2: sc = 4
+        elif scale > 1: sc = 2
+        else: sc = 1
     else:
-        if scale > 3:
-            sc = 4
-        elif scale > 2:
-            sc = 3
-        elif scale > 1:
-            sc = 2
-        else:
-            sc = 1
+        if scale > 3: sc = 4
+        elif scale > 2: sc = 3
+        elif scale > 1: sc = 2
+        else: sc = 1
 
     # Upscaling: For scale ]1,8]
     if model == "lapsrn": # x2, x4, x8:
@@ -111,3 +103,6 @@ def upscale_ff(input_path ,output_path, model='lapsrn', scale=2):
     else: print("Upscaled image saved to", output_path)
 
     return upscaled
+
+if __name__ == '__main__':
+    upscale_ff("taeni.png", "taeni_s.png", "edsr", 2.32)
