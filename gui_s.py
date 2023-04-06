@@ -213,6 +213,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super(MainWindow, self).__init__()
         self.file_list = []
+        self.model = 'lapsrn'
         self.initUI()
         self.to_scale()
 
@@ -228,6 +229,7 @@ class MainWindow(QWidget):
         self.fileops.queue_list.itemSelectionChanged.connect(self.selected_item)
 
         self.settings.outdir_button.clicked.connect(self.set_outdir)
+        self.settings.model_combo.currentIndexChanged.connect(self.set_model)
         self.settings.scale_button.clicked.connect(self.to_scale)
         self.settings.height_button.clicked.connect(self.to_height)
         self.settings.width_button.clicked.connect(self.to_width)
@@ -276,6 +278,11 @@ class MainWindow(QWidget):
             self.console.line.setPlaceholderText(' Set Output Directory')
         self.file_list = []
         self.cprint('Reset')
+
+    def set_model(self):
+        self.model = self.settings.model_combo.currentText()
+        self.cprint(f'Model set to {self.model}')
+        self.model = self.model.lower()
 
     # Function to enable scale input
     def to_scale(self):
@@ -452,19 +459,40 @@ class MainWindow(QWidget):
 
     # Function to start process
     def start_process(self):
-        path = self.file_list[self.fileops.queue_list.currentRow()]
+
+        if self.outdir == '':
+            self.cprint('Please select an output directory')
+            return
+        
+        if self.fileops.queue_list.count() == 0:
+            self.cprint('Please add files to the queue')
+            return
+
+        current_row = self.fileops.queue_list.currentRow()
+        path = self.file_list[current_row]
         basename, extension = os.path.splitext(os.path.basename(path))
         new_name = f'{basename}_x{self.scale:.1f}{extension}'
         out_path = os.path.join(self.outdir, new_name)
 
         self.cprint(f'Processing: {new_name} ...')
+        self.console.start_button.setText('Processing...')
 
-        upscale_ff(path, out_path, scale=self.scale)
+        if self.by_scale:
+            self.cprint(f'To scale: {self.scale:.1f}x')
+            upscale_ff(path, out_path, model=self.model, scale=self.scale)
+        elif self.by_height:
+            self.cprint(f'To height: {self.new_height} px')
+            upscale_ff(path, out_path, model=self.model, height=self.new_height)
+        elif self.by_width:
+            self.cprint(f'To width: {self.new_width} px')
+            upscale_ff(path, out_path, model=self.model, width=self.new_width)
 
         self.cprint(f'Finished: {new_name}')
+        self.console.start_button.setText('Start')
 
-        
-
+        # Remove processed file from queue
+        self.fileops.queue_list.takeItem(current_row)
+        self.file_list.pop(current_row)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
