@@ -26,20 +26,14 @@ class MQLabel(QLabel):
         self.setAttribute(Qt.WA_Hover)
     
     def mousePressEvent(self, event):
-        x = event.x()
-        y = event.y()
         self.mousePressed.emit(event)
         event.accept()
 
     def mouseMoveEvent(self, event):
-        x = event.x()
-        y = event.y()
         self.mouseMoved.emit(event)
         event.accept()
 
     def mouseReleaseEvent(self, event):
-        x = event.x()
-        y = event.y()
         self.mouseReleased.emit(event)
         event.accept()
 
@@ -61,13 +55,15 @@ class ImageWidget(QWidget):
                             'bottom_left': False,
                             'bottom_right': False}
         self.mode = None
+        self.unlock = True
         self.resizeEdge = None
-
+        
         # Load the image
         self.image = QPixmap(image_path)
 
         # Create a QLabel to display the image
         self.label = MQLabel(self)
+        self.label.setScaledContents(True)
         self.label.mousePressed.connect(self.mousePressEvent)
         self.label.mouseMoved.connect(self.mouseMoveEvent)
         self.label.mouseReleased.connect(self.mouseReleaseEvent)
@@ -95,27 +91,35 @@ class ImageWidget(QWidget):
         painter.drawRect(self.rect)
         painter.end()
 
+    # Lock mode to prevent changing the mode while the mouse is pressed due to mouse moving too fast
     def mousePressEvent(self, event):
 
-        if self.mode == 'move':
+        print(f'Pressed')
+
+        if self.unlock:
+            self.unlock = False
+            self.lockedMode = self.mode
+            self.lockedEdge = self.resizeEdge
+
+        if self.lockedMode == 'move':
             self.drag_start = event.pos() - self.rect.topLeft()
 
-        elif self.mode == 'resize':
-            if self.resizeEdge == 'top_left':
+        elif self.lockedMode == 'resize':
+            if self.lockedEdge == 'top_left':
                 self.drag_start = event.pos() - self.rect.topLeft()
-            elif self.resizeEdge == 'top_right':
+            elif self.lockedEdge == 'top_right':
                 self.drag_start = event.pos() - self.rect.topRight()
-            elif self.resizeEdge == 'bottom_left':
+            elif self.lockedEdge == 'bottom_left':
                 self.drag_start = event.pos() - self.rect.bottomLeft()
-            elif self.resizeEdge == 'bottom_right':
+            elif self.lockedEdge == 'bottom_right':
                 self.drag_start = event.pos() - self.rect.bottomRight()
-            elif self.resizeEdge == 'top':
+            elif self.lockedEdge == 'top':
                 self.drag_start = event.pos() - self.rect.topLeft()
-            elif self.resizeEdge == 'right':
-                self.drag_start = event.pos() - self.rect.topRight()
-            elif self.resizeEdge == 'bottom':
+            elif self.lockedEdge == 'right':
+                self.drag_start = event.pos() - self.rect.bottomRight()
+            elif self.lockedEdge == 'bottom':
                 self.drag_start = event.pos() - self.rect.bottomLeft()
-            elif self.resizeEdge == 'left':
+            elif self.lockedEdge == 'left':
                 self.drag_start = event.pos() - self.rect.topLeft()
             
     def mouseMoveEvent(self, event):
@@ -167,36 +171,36 @@ class ImageWidget(QWidget):
         else:
             raise Exception('Something went wrong')
 
-        if self.drag_start is not None:
-            # Calculate the new position of the top-left corner of the rectangle
+        if self.drag_start is not None: # Also means mouse is pressed, locked defined
+
             new_pos = event.pos() - self.drag_start
 
-            if self.mode == 'move':
+            if self.lockedMode == 'move':
                 self.rect.moveTopLeft(new_pos)
-            elif self.mode == 'resize':
-                if self.resizeEdge == 'top_left':
-                    self.rect.setTopLeft(new_pos)
-                elif self.resizeEdge == 'top_right':
-                    self.rect.setTopRight(new_pos)
-                elif self.resizeEdge == 'bottom_left':
-                    self.rect.setBottomLeft(new_pos)
-                elif self.resizeEdge == 'bottom_right':
-                    self.rect.setBottomRight(new_pos)
-                elif self.resizeEdge == 'top':
-                    self.rect.setTop(new_pos.y())
-                elif self.resizeEdge == 'right':
-                    self.rect.setRight(new_pos.x())
-                elif self.resizeEdge == 'bottom':
-                    self.rect.setBottom(new_pos.y())
-                elif self.resizeEdge == 'left':
-                    self.rect.setLeft(new_pos.x())
+            elif self.lockedMode == 'resize':
+                if self.lockedEdge == 'top' or self.lockedEdge == 'top_left' or self.lockedEdge == 'top_right':
+                    newSize = self.rect.bottomLeft() - new_pos
+                    if not newSize.y() < 2*EDGE_THRESH:
+                        self.rect.setTop(new_pos.y())
+                if self.lockedEdge == 'right' or self.lockedEdge == 'top_right' or self.lockedEdge == 'bottom_right':
+                    newSize = self.rect.topLeft() - new_pos
+                    if not -newSize.x() < 2*EDGE_THRESH:
+                        self.rect.setRight(new_pos.x())
+                if self.lockedEdge == 'bottom' or self.lockedEdge == 'bottom_left' or self.lockedEdge == 'bottom_right':
+                    newSize = self.rect.topLeft() - new_pos
+                    if not -newSize.y() < 2*EDGE_THRESH:
+                        self.rect.setBottom(new_pos.y())
+                if self.lockedEdge == 'left' or self.lockedEdge == 'top_left' or self.lockedEdge == 'bottom_left':
+                    newSize = self.rect.topRight() - new_pos
+                    if not newSize.x() < 2*EDGE_THRESH:
+                        self.rect.setLeft(new_pos.x())
 
-            # Redraw the rectangle on the QLabel
             self.update()
 
     def mouseReleaseEvent(self, event):
         self.drag_start = None
-        
+        self.unlock = True
+        print('Released')
 
 
 class MainWindow(QWidget):
