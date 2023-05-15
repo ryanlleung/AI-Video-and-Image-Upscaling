@@ -263,6 +263,7 @@ class MainWindow(QWidget):
 
     def cprint(self, text):
         self.console.console.append(f'>>   {text}')
+        self.console.console.update()
 
     def add_files(self):
         files, _ = QFileDialog.getOpenFileNames(self, 'Select File(s)', '', 'All Files (*)')
