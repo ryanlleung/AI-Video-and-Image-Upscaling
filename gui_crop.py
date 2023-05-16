@@ -13,6 +13,8 @@ from cv2 import dnn_superres
 from img_ops import upscale_ff
 from PIL import Image
 
+# Use camel case for boolean variables and functions
+# Use underscore for other variables
 
 class MQLabel(QLabel):
     
@@ -58,6 +60,7 @@ class ImageWidget(QWidget):
         self.unlock = True
         self.resizeEdge = None
         self.showGuides = True
+        self.keepRatio = False
 
         # Create a QLabel to display the image
         self.label = MQLabel(self)
@@ -226,9 +229,21 @@ class ImageWidget(QWidget):
         if self.drag_start is not None:
 
             new_pos = event.pos() - self.drag_start
+            self.tmp_rtg = QRect(new_pos, self.rtg.size())
 
             if self.lockedMode == 'move':
                 self.rtg.moveTopLeft(new_pos)
+
+                self.rtg_coords = self.rtg.getCoords()
+                if self.rtg_coords[0] < 0:
+                    self.rtg.moveLeft(0)
+                if self.rtg_coords[1] < 0:
+                    self.rtg.moveTop(0)
+                if self.rtg_coords[2] > self.pixrtg.width():
+                    self.rtg.moveRight(self.pixrtg.width()-2)
+                if self.rtg_coords[3] > self.pixrtg.height():
+                    self.rtg.moveBottom(self.pixrtg.height()-2)
+
             elif self.lockedMode == 'resize':
                 if self.lockedEdge == 'top' or self.lockedEdge == 'top_left' or self.lockedEdge == 'top_right':
                     newSize = self.rtg.bottomLeft() - new_pos
@@ -247,22 +262,21 @@ class ImageWidget(QWidget):
                     if newSize.x() > 2*EDGE_THRESH:
                         self.rtg.setLeft(new_pos.x())
 
+                self.rtg_coords = self.rtg.getCoords()
+                if self.rtg_coords[0] < 0:
+                    self.rtg.setLeft(0)
+                if self.rtg_coords[1] < 0:
+                    self.rtg.setTop(0)
+                if self.rtg_coords[2] > self.pixrtg.width():
+                    self.rtg.setRight(self.pixrtg.width()-2)
+                if self.rtg_coords[3] > self.pixrtg.height():
+                    self.rtg.setBottom(self.pixrtg.height()-2)
+
             self.update()
 
     def mouseReleaseEvent(self, event):
         self.drag_start = None
         self.unlock = True
-        
-        # Limit rectangle size
-        self.rtg_coords = self.rtg.getCoords()
-        if self.rtg_coords[0] < 0:
-            self.rtg.setLeft(0)
-        if self.rtg_coords[1] < 0:
-            self.rtg.setTop(0)
-        if self.rtg_coords[2] > self.pixrtg.width():
-            self.rtg.setRight(self.pixrtg.width()-2)
-        if self.rtg_coords[3] > self.pixrtg.height():
-            self.rtg.setBottom(self.pixrtg.height()-2)
 
         print('Released')
 
@@ -307,19 +321,34 @@ class MainWindow(QWidget):
         self.newdims_box = QHBoxLayout(self)
         self.newdims_width = QLabel("Width: ")
         self.newdims_width_val = QLineEdit()
-        self.newdims_width_val.setReadOnly(True)
         self.newdims_height = QLabel("Height: ")
         self.newdims_height_val = QLineEdit()
-        self.newdims_height_val.setReadOnly(True)
         self.newdims_box.addWidget(self.newdims_width)
         self.newdims_box.addWidget(self.newdims_width_val)
         self.newdims_box.addWidget(self.newdims_height)
         self.newdims_box.addWidget(self.newdims_height_val)
 
+        self.ratio = QLabel("Aspect Ratio")
+        self.ratio.setContentsMargins(0, 10, 0, 0)
+        self.ratio_box = QHBoxLayout(self)
+        self.ratio_x = QLabel("X: ")
+        self.ratio_x_val = QLineEdit()
+        self.ratio_y = QLabel("Y: ")
+        self.ratio_y_val = QLineEdit()
+        self.keepratio = QCheckBox("Keep Ratio")
+        self.keepratio.setChecked(False)
+        self.ratio_box.addWidget(self.ratio_x)
+        self.ratio_box.addWidget(self.ratio_x_val)
+        self.ratio_box.addWidget(self.ratio_y)
+        self.ratio_box.addWidget(self.ratio_y_val)
+        self.ratio_box.addWidget(self.keepratio)
+
         self.command_box.addWidget(self.oridims)
         self.command_box.addLayout(self.oridims_box)
         self.command_box.addWidget(self.newdims)
         self.command_box.addLayout(self.newdims_box)
+        self.command_box.addWidget(self.ratio)
+        self.command_box.addLayout(self.ratio_box)
 
         self.command_widget = QWidget()
         self.command_widget.setFixedWidth(300)
