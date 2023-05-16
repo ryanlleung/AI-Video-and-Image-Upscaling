@@ -40,7 +40,7 @@ class MQLabel(QLabel):
 
 class ImageWidget(QWidget):
 
-    def __init__(self, image_path):
+    def __init__(self):
         super().__init__()
         self.setMouseTracking(True)
 
@@ -57,6 +57,7 @@ class ImageWidget(QWidget):
         self.mode = None
         self.unlock = True
         self.resizeEdge = None
+        self.showGuides = True
 
         # Create a QLabel to display the image
         self.label = MQLabel(self)
@@ -69,8 +70,24 @@ class ImageWidget(QWidget):
         self.label.mouseMoved.connect(self.mouseMoveEvent)
         self.label.mouseReleased.connect(self.mouseReleaseEvent)
 
-        # Load the image
-        pixmap = QPixmap(image_path)
+        # Create a QRect to draw the cropping rectangle
+        self.rtg = QRect(0, 0, 200, 200)
+        self.rtg_pen = QPen(QColor(0, 255, 255), 1)
+        self.rtg_brush = QBrush(Qt.NoBrush)
+
+        # Create guide lines
+        self.guide_v1 = QPen(QColor(0, 200, 200), 1, Qt.SolidLine)
+        self.guide_v2 = QPen(QColor(0, 200, 200), 1, Qt.SolidLine)
+        self.guide_h1 = QPen(QColor(0, 200, 200), 1, Qt.SolidLine)
+        self.guide_h2 = QPen(QColor(0, 200, 200), 1, Qt.SolidLine)
+
+        # Set widget size
+        self.setFixedSize(self.label.width(), self.label.height())
+        self.setImage('ico/white.png')
+
+
+    def setImage(self, path):
+        pixmap = QPixmap(path)
         self.scaled_pixmap = pixmap.scaled(self.label.width()-2, self.label.height()-2, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         width_diff = self.label.width() - self.scaled_pixmap.width()
@@ -79,8 +96,7 @@ class ImageWidget(QWidget):
         self.label.setPixmap(self.scaled_pixmap)
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setContentsMargins(width_diff//2, height_diff//2, width_diff//2, height_diff//2)
-
-        # 0, 0 offset of cropping rectangle
+        
         self.rtg_X = width_diff//2
         self.rtg_Y = height_diff//2
 
@@ -91,14 +107,6 @@ class ImageWidget(QWidget):
         # print label location
         print(f'label: {self.label.rect()}')
 
-        # Create a QRect to draw the cropping rectangle
-        self.rtg = QRect(0, 0, 200, 200)
-        self.rtg_pen = QPen(QColor(255, 0, 0), 1)
-        self.rtg_brush = QBrush(Qt.NoBrush)
-
-        # Set widget size
-        self.setFixedSize(self.label.width(), self.label.height())
-
 
     def paintEvent(self, event):
         # Call the paintEvent of the parent class
@@ -107,11 +115,23 @@ class ImageWidget(QWidget):
         # Clear the pixmap of the QLabel
         self.label.setPixmap(self.scaled_pixmap)
 
-        # Create a QPainter to draw the rectangle on the QLabel
+        # Create a QPainter to draw the rectangle and guide lines on the QLabel
         painter = QPainter(self.label.pixmap())
+        
+        if self.showGuides:
+            painter.setPen(self.guide_v1)
+            painter.drawLine(self.rtg.width()//3 + self.rtg.x(), self.rtg.y(), self.rtg.width()//3 + self.rtg.x(), self.rtg.y() + self.rtg.height())
+            painter.setPen(self.guide_v2)
+            painter.drawLine(self.rtg.width()//3*2 + self.rtg.x(), self.rtg.y(), self.rtg.width()//3*2 + self.rtg.x(), self.rtg.y() + self.rtg.height())
+            painter.setPen(self.guide_h1)
+            painter.drawLine(self.rtg.x(), self.rtg.height()//3 + self.rtg.y(), self.rtg.x() + self.rtg.width(), self.rtg.height()//3 + self.rtg.y())
+            painter.setPen(self.guide_h2)
+            painter.drawLine(self.rtg.x(), self.rtg.height()//3*2 + self.rtg.y(), self.rtg.x() + self.rtg.width(), self.rtg.height()//3*2 + self.rtg.y())
+            
         painter.setPen(self.rtg_pen)
         painter.setBrush(self.rtg_brush)
         painter.drawRect(self.rtg)
+
         painter.end()
 
     # Lock mode to prevent changing the mode while the mouse is pressed due to mouse moving too fast
@@ -256,13 +276,20 @@ class MainWindow(QWidget):
     def initUI(self):
         
         # Create the ImageWidget
-        self.image_widget = ImageWidget("medias/New_0 degree - Plan view_x0.5.png")
+        self.image_widget = ImageWidget()
+        # self.image_widget.label.mousePressed.connect(self.mousePressEvent)
+        self.image_widget.label.mouseMoved.connect(self.mouseMoveEvent)
+        self.image_widget.label.mouseReleased.connect(self.mouseReleaseEvent)
 
+        # Create the settings box
+        self.settings_box = QVBoxLayout(self)
+
+        # Top: Command box
         self.command_box = QVBoxLayout(self)
         self.command_box.setAlignment(Qt.AlignTop)
 
         self.oridims = QLabel("Original Dimensions")
-        self.oridims.setContentsMargins(0, 15, 0, 0)
+        self.oridims.setContentsMargins(0, 10, 0, 0)
         self.oridims_box = QHBoxLayout(self)
         self.oridims_width = QLabel("Width: ")
         self.oridims_width_val = QLineEdit()
@@ -276,7 +303,7 @@ class MainWindow(QWidget):
         self.oridims_box.addWidget(self.oridims_height_val)
 
         self.newdims = QLabel("Cropped Dimensions")
-        self.newdims.setContentsMargins(0, 15, 0, 0)
+        self.newdims.setContentsMargins(0, 10, 0, 0)
         self.newdims_box = QHBoxLayout(self)
         self.newdims_width = QLabel("Width: ")
         self.newdims_width_val = QLineEdit()
@@ -295,13 +322,31 @@ class MainWindow(QWidget):
         self.command_box.addLayout(self.newdims_box)
 
         self.command_widget = QWidget()
-        # self.command_widget.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         self.command_widget.setFixedWidth(300)
         self.command_widget.setLayout(self.command_box)
 
+        # Bottom: File box
+        self.file_box = QHBoxLayout(self)
+        self.file_box.setAlignment(Qt.AlignBottom)
+        
+        self.file_button = QPushButton("Open File")
+        self.file_button.clicked.connect(lambda: self.openFile(imgpath=None))
+        self.save_button = QPushButton("Save File")
+        self.save_button.clicked.connect(self.saveFile)
+
+        self.file_box.addWidget(self.file_button)
+        self.file_box.addWidget(self.save_button)
+
+        self.settings_box.addWidget(self.command_widget)
+        self.settings_box.addLayout(self.file_box)
+
+        self.settings_widget = QWidget()
+        self.command_widget.setFixedWidth(300)
+        self.settings_widget.setLayout(self.settings_box)
+
         box = QHBoxLayout(self)
         box.addWidget(self.image_widget)
-        box.addWidget(self.command_widget)
+        box.addWidget(self.settings_widget)
         self.setLayout(box)
 
         self.setMouseTracking(True)
@@ -310,10 +355,49 @@ class MainWindow(QWidget):
         self.setWindowTitle("GUI")
         self.show()
 
+        self.openFile('./medias/New_0 degree - probe set-up_x0.5.png')
+
     def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.NoButton:
-            # print(event.pos())
-            pass
+        self.updateNewDims()
+
+    def mouseReleaseEvent(self, event):
+        self.updateNewDims()
+
+    def updateNewDims(self):
+        # Get the coordinates of the displayed pixmap rtg
+        x0, y0, width, height = self.image_widget.pixrtg.getCoords()
+        scale = float(width+1) / self.img.shape[1]
+        c_x0, c_y0, c_x1, c_y1 = self.image_widget.rtg.getCoords()
+        self.cropped_x0 = int(c_x0/scale)
+        self.cropped_y0 = int(c_y0/scale)
+        self.cropped_width = int((c_x1-c_x0)/scale)+4
+        self.cropped_height = int((c_y1-c_y0)/scale)+4
+        if self.cropped_width > self.img.shape[1]:
+            self.cropped_width = self.img.shape[1]
+        if self.cropped_height > self.img.shape[0]:
+            self.cropped_height = self.img.shape[0]
+        self.newdims_width_val.setText(str(self.cropped_width))
+        self.newdims_height_val.setText(str(self.cropped_height))
+
+    def openFile(self, imgpath=None):
+        if imgpath is None:
+            print('Open file')
+            self.imgpath = QFileDialog.getOpenFileName(self, 'Open file', './medias', "Image files (*.jpg *.gif *.png)")[0]
+            print('File opened')
+            if self.imgpath == '': return
+        else:
+            print(f'Open file {imgpath}')
+            self.imgpath = imgpath
+        self.image_widget.setImage(self.imgpath)
+        self.img = cv2.imread(self.imgpath)        
+        self.oridims_width_val.setText(str(self.img.shape[1]))
+        self.oridims_height_val.setText(str(self.img.shape[0]))
+
+    def saveFile(self):
+        print('Save file')
+        cropped_img = self.img[self.cropped_y0:self.cropped_y0+self.cropped_height, self.cropped_x0:self.cropped_x0+self.cropped_width]
+        cv2.imwrite('cropped.png', cropped_img)
+        print('File saved')
 
 
 app = QCoreApplication.instance()
