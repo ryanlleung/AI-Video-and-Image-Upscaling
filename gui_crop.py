@@ -61,6 +61,7 @@ class ImageWidget(QWidget):
         self.resizeEdge = None
         self.showGuides = True
         self.keepRatio = False
+        self.ratio = None
 
         # Create a QLabel to display the image
         self.label = MQLabel(self)
@@ -104,6 +105,10 @@ class ImageWidget(QWidget):
         self.rtg_Y = height_diff//2
 
         self.pixrtg = self.label.pixmap().rect()
+
+        # Set the cropping rectangle to size of pixrtg
+        self.rtg.setCoords(0, 0, self.pixrtg.width()-2, self.pixrtg.height()-2)
+        self.aspect_ratio = float(self.pixrtg.width()) / float(self.pixrtg.height())
 
         # print pixmap location
         print(f'pixmap: {self.label.pixmap().rect()}')
@@ -234,6 +239,7 @@ class ImageWidget(QWidget):
             if self.lockedMode == 'move':
                 self.rtg.moveTopLeft(new_pos)
 
+                # Stop moving if out of bounds
                 self.rtg_coords = self.rtg.getCoords()
                 if self.rtg_coords[0] < 0:
                     self.rtg.moveLeft(0)
@@ -262,16 +268,108 @@ class ImageWidget(QWidget):
                     if newSize.x() > 2*EDGE_THRESH:
                         self.rtg.setLeft(new_pos.x())
 
+                # Stop resizing if out of bounds
                 self.rtg_coords = self.rtg.getCoords()
+                self.OOB = False
                 if self.rtg_coords[0] < 0:
                     self.rtg.setLeft(0)
+                    self.OOB = True
                 if self.rtg_coords[1] < 0:
                     self.rtg.setTop(0)
+                    self.OOB = True
                 if self.rtg_coords[2] > self.pixrtg.width():
                     self.rtg.setRight(self.pixrtg.width()-2)
+                    self.OOB = True
                 if self.rtg_coords[3] > self.pixrtg.height():
                     self.rtg.setBottom(self.pixrtg.height()-2)
+                    self.OOB = True
 
+                # Keep the aspect ratio
+                if self.keepRatio:
+                    print('Keeping ratio')
+                    new_width = self.rtg.height() * self.aspect_ratio
+                    new_height = self.rtg.width() / self.aspect_ratio
+                    last_aspect_ratio = self.rtg.width() / self.rtg.height()
+
+                    tmp_rtg = QRect(self.rtg.topLeft(), self.rtg.size())
+                    if self.lockedEdge == 'top':
+                        last_center_x = tmp_rtg.center().x()
+                        tmp_rtg.setWidth(new_width)
+                        tmp_rtg.moveCenter(QPoint(last_center_x, tmp_rtg.center().y()))
+                    elif self.lockedEdge == 'top_right':
+                        last_bottom_left = tmp_rtg.bottomLeft()
+                        if last_aspect_ratio > self.aspect_ratio:
+                            tmp_rtg.setHeight(new_height)
+                        elif last_aspect_ratio < self.aspect_ratio:
+                            tmp_rtg.setWidth(new_width)
+                        tmp_rtg.moveBottomLeft(last_bottom_left)
+                    elif self.lockedEdge == 'right':
+                        last_center_y = tmp_rtg.center().y()
+                        tmp_rtg.setHeight(new_height)
+                        tmp_rtg.moveCenter(QPoint(tmp_rtg.center().x(), last_center_y))
+                    elif self.lockedEdge == 'bottom_right':
+                        last_top_left = tmp_rtg.topLeft()
+                        if last_aspect_ratio > self.aspect_ratio:
+                            tmp_rtg.setHeight(new_height)
+                        elif last_aspect_ratio < self.aspect_ratio:
+                            tmp_rtg.setWidth(new_width)
+                        tmp_rtg.moveTopLeft(last_top_left)
+                    elif self.lockedEdge == 'bottom':
+                        last_center_x = tmp_rtg.center().x()
+                        tmp_rtg.setWidth(new_width)
+                        tmp_rtg.moveCenter(QPoint(last_center_x, tmp_rtg.center().y()))
+                    elif self.lockedEdge == 'bottom_left':
+                        last_top_right = tmp_rtg.topRight()
+                        if last_aspect_ratio > self.aspect_ratio:
+                            tmp_rtg.setHeight(new_height)
+                        elif last_aspect_ratio < self.aspect_ratio:
+                            tmp_rtg.setWidth(new_width)
+                        tmp_rtg.moveTopRight(last_top_right)
+                    elif self.lockedEdge == 'left':
+                        new_height = tmp_rtg.width() / self.aspect_ratio
+                        last_center_y = tmp_rtg.center().y()
+                        tmp_rtg.setHeight(new_height)
+                        tmp_rtg.moveCenter(QPoint(tmp_rtg.center().x(), last_center_y))
+                    elif self.lockedEdge == 'top_left':
+                        last_bottom_right = tmp_rtg.bottomRight()
+                        if last_aspect_ratio > self.aspect_ratio:
+                            tmp_rtg.setHeight(new_height)
+                        elif last_aspect_ratio < self.aspect_ratio:
+                            tmp_rtg.setWidth(new_width)
+                        tmp_rtg.moveBottomRight(last_bottom_right)
+
+                    # Stop resizing if out of bounds
+                    tmp_rtg_coords = tmp_rtg.getCoords()
+                    self.OOBtop = False
+                    self.OOBbottom = False
+                    self.OOBleft = False
+                    self.OOBright = False
+                    if tmp_rtg_coords[0] < 0:
+                        tmp_rtg.setLeft(0)
+                        print('Left OOB')
+                        self.OOBleft = True
+                    if tmp_rtg_coords[1] < 0:
+                        tmp_rtg.setTop(0)
+                        print('Top OOB')
+                        self.OOBtop = True
+                    if tmp_rtg_coords[2] > self.pixrtg.width()-2:
+                        tmp_rtg.setRight(self.pixrtg.width()-2)
+                        print('Right OOB')
+                        self.OOBright = True
+                    if tmp_rtg_coords[3] > self.pixrtg.height()-2:
+                        tmp_rtg.setBottom(self.pixrtg.height()-2)
+                        print('Bottom OOB')
+                        self.OOBbottom = True
+
+                    if self.OOBtop and self.OOBbottom:
+                        ratio_width = (tmp_rtg.height()+2) * self.aspect_ratio
+                        tmp_rtg.setWidth(ratio_width)
+                    if self.OOBleft and self.OOBright:
+                        ratio_height = (tmp_rtg.width()+2) / self.aspect_ratio
+                        tmp_rtg.setHeight(ratio_height)
+                    
+                    self.rtg = tmp_rtg
+                    
             self.update()
 
     def mouseReleaseEvent(self, event):
@@ -303,7 +401,7 @@ class MainWindow(QWidget):
         self.command_box.setAlignment(Qt.AlignTop)
 
         self.oridims = QLabel("Original Dimensions")
-        self.oridims.setContentsMargins(0, 10, 0, 0)
+        self.oridims.setContentsMargins(0, 5, 0, 0)
         self.oridims_box = QHBoxLayout(self)
         self.oridims_width = QLabel("Width: ")
         self.oridims_width_val = QLineEdit()
@@ -328,8 +426,8 @@ class MainWindow(QWidget):
         self.newdims_box.addWidget(self.newdims_height)
         self.newdims_box.addWidget(self.newdims_height_val)
 
-        self.ratio = QLabel("Aspect Ratio")
-        self.ratio.setContentsMargins(0, 10, 0, 0)
+        self.ratios = QLabel("Aspect Ratio")
+        self.ratios.setContentsMargins(0, 10, 0, 0)
         self.ratio_box = QHBoxLayout(self)
         self.ratio_x = QLabel("X: ")
         self.ratio_x_val = QLineEdit()
@@ -337,6 +435,7 @@ class MainWindow(QWidget):
         self.ratio_y_val = QLineEdit()
         self.keepratio = QCheckBox("Keep Ratio")
         self.keepratio.setChecked(False)
+        self.keepratio.stateChanged.connect(self.keepratioChanged)
         self.ratio_box.addWidget(self.ratio_x)
         self.ratio_box.addWidget(self.ratio_x_val)
         self.ratio_box.addWidget(self.ratio_y)
@@ -347,7 +446,7 @@ class MainWindow(QWidget):
         self.command_box.addLayout(self.oridims_box)
         self.command_box.addWidget(self.newdims)
         self.command_box.addLayout(self.newdims_box)
-        self.command_box.addWidget(self.ratio)
+        self.command_box.addWidget(self.ratios)
         self.command_box.addLayout(self.ratio_box)
 
         self.command_widget = QWidget()
@@ -384,6 +483,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("GUI")
         self.show()
 
+        self.openFile('./ico/white.png')
         self.openFile('./medias/New_0 degree - probe set-up_x0.5.png')
 
     def mouseMoveEvent(self, event):
@@ -396,7 +496,11 @@ class MainWindow(QWidget):
         # Get the coordinates of the displayed pixmap rtg
         x0, y0, width, height = self.image_widget.pixrtg.getCoords()
         scale = float(width+1) / self.img.shape[1]
+
+        # Get the coordinates of the cropped pixmap rtg
         c_x0, c_y0, c_x1, c_y1 = self.image_widget.rtg.getCoords()
+
+        # Convert to original scale
         self.cropped_x0 = int(c_x0/scale)
         self.cropped_y0 = int(c_y0/scale)
         self.cropped_width = int((c_x1-c_x0)/scale)+4
@@ -407,6 +511,11 @@ class MainWindow(QWidget):
             self.cropped_height = self.img.shape[0]
         self.newdims_width_val.setText(str(self.cropped_width))
         self.newdims_height_val.setText(str(self.cropped_height))
+
+        # Update ratio
+        self.aspect_ratio = round(float(self.cropped_width) / self.cropped_height, 2)
+        self.ratio_x_val.setText(str(self.aspect_ratio))
+        self.ratio_y_val.setText(str(1.00))
 
     def openFile(self, imgpath=None):
         if imgpath is None:
@@ -421,6 +530,14 @@ class MainWindow(QWidget):
         self.img = cv2.imread(self.imgpath)        
         self.oridims_width_val.setText(str(self.img.shape[1]))
         self.oridims_height_val.setText(str(self.img.shape[0]))
+        self.updateNewDims()
+
+    def keepratioChanged(self):
+        if self.keepratio.isChecked():
+            self.image_widget.keepRatio = True
+            self.image_widget.aspect_ratio = float(self.ratio_x_val.text()) / float(self.ratio_y_val.text())
+        else:
+            self.image_widget.keepRatio = False
 
     def saveFile(self):
         print('Save file')
